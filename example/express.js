@@ -43,9 +43,6 @@ let server;
   const parse = bodyParser.urlencoded({ extended: false });
 
   app.post('/interaction/:grant/login', parse, (req, res, next) => {
-    console.log('authentice called from express.js');
-    console.log('********');
-    console.log('request body is',req.body);
     Account.authenticate(req.body.login, req.body.password)
       .then(account => provider.interactionFinished(req, res, {
         login: {
@@ -55,6 +52,10 @@ let server;
         },
         consent: {
           rejectedScopes: req.body.remember ? ['offline_access'] : [],
+        },
+        meta: {
+          // object structure up-to-you
+          bankId: '1234567890',
         },
       })).catch(next);
   });

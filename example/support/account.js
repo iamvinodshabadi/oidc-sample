@@ -71,7 +71,6 @@ class Account {
             "bankId": "5b07e07962b26ba8a0fd3c28"
           })
         }, (error, response, body) => {
-          console.log('response received', response.body);
           if (response) {
             if (response.statusCode == 201) {
               const parsedResponse = JSON.parse(response.body);
@@ -84,10 +83,10 @@ class Account {
                 return reject(401);
               }
             } else {
-              return reject(err);
+              return reject(401);
             }
           } else {
-            return reject(err);
+            return reject(401);
           }
         });
       } catch (err) {
