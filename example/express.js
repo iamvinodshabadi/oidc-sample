@@ -26,6 +26,8 @@ const bodyParser = require('body-parser');
 
 const mongoAdapter = require('./adapters/mongodb');
 
+const redisAdapter = require('./adapters/redis');
+
 const provider = new Provider(ISSUER, providerConfiguration);
 
 if (TIMEOUT) {
@@ -33,13 +35,15 @@ if (TIMEOUT) {
 }
 
 let server;
+console.log('1');
 (async () => {
+  console.log('2');
   await provider.initialize({
-    adapter: mongoAdapter, // eslint-disable-line global-require
+    adapter: redisAdapter, // eslint-disable-line global-require
     clients,
     keystore: { keys },
   });
-
+  console.log('3');
   const parse = bodyParser.urlencoded({ extended: false });
 
   app.post('/interaction/:grant/login', parse, (req, res, next) => {
