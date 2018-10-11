@@ -42,23 +42,6 @@ let server;
 
   const parse = bodyParser.urlencoded({ extended: false });
 
-  app.post('/interaction/:grant/login', parse, (req, res, next) => {
-    console.log('authentice called from express.js');
-    console.log('********');
-    console.log('request body is',req.body);
-    Account.authenticate(req.body.login, req.body.password)
-      .then(account => provider.interactionFinished(req, res, {
-        login: {
-          account: account.accountId,
-          remember: !!req.body.remember,
-          ts: Math.floor(Date.now() / 1000),
-        },
-        consent: {
-          rejectedScopes: req.body.remember ? ['offline_access'] : [],
-        },
-      })).catch(next);
-  });
-
   if (process.env.NODE_ENV === 'production') {
     app.enable('trust proxy');
     provider.proxy = true;

@@ -53,6 +53,14 @@
         -moz-box-sizing: border-box;
       }
 
+      .login-card label[type=text]{
+        font-size: 16px;
+        color: red;
+        display: block;
+        margin-bottom: 20px;
+        position: relative;
+      }
+
       .login {
         text-align: center;
         font-size: 14px;
@@ -122,17 +130,6 @@
         <a href="<%= details.returnTo %>">[ Cancel ]</a>
         <% if (client.tosUri) { %><a href="<%= client.tosUri %>">[ Terms of Service ]</a><% } %>
         <% if (client.policyUri) { %><a href="<%= client.policyUri %>">[ Privacy Policy ]</a><% } %>
-      </div>
-    </div>
-    <div class="login-card">
-      <div class="grant-debug">
-        <%= details.uuid %>
-      </div>
-      <div class="grant-debug">
-        <%- params %>
-      </div>
-      <div class="grant-debug">
-        <%- interaction %>
       </div>
     </div>
   </body>

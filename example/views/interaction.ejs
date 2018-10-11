@@ -1,4 +1,11 @@
 <form autocomplete="off" action="/interaction/<%= details.uuid %>/confirm" method="post">
   <input type="hidden" name="uuid" value="<%= details.uuid %>"/>
-  <button autofocus type="submit" class="login login-submit">Continue</button>
+  <input type="hidden" name="allScopes" value="<%= params%>"/>
+  <label>This app would like to access your</label><br/>
+  <% params.forEach (function (params) { %>
+    <label><input type="checkbox" value = "<%= params %>" name="params" checked="yes"><%=params %></label>
+    <br/>
+  <% }); %>
+
+  <button type="submit" class="login login-submit">Allow</button>
 </form>

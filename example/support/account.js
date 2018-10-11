@@ -46,16 +46,21 @@ class Account {
 
     console.log('making api request');
 
-    var response = await Account.uctAuthenticate(email,password);
+    try {
+      var response = await Account.uctAuthenticate(email,password);
 
-    console.log('return called id', response);
+    console.log('return called id', new this(response));
     if(response) {
       return resolve(new this(response));
     } else {
       return reject();
     }
-    });
-  } 
+    } catch (error) {
+      console.log('authenticate: exception cached');
+      reject();
+    }
+  });
+} 
 
   static async uctAuthenticate(email, password) {
     return new Promise(async (resolve, reject) => {
@@ -76,23 +81,20 @@ class Account {
             if (response.statusCode == 201) {
               const parsedResponse = JSON.parse(response.body);
               if (parsedResponse) {
-                const kvPair = {
-                  
-                }
                 return resolve(parsedResponse.customerId);
               } else {
-                return reject(401);
+                return reject(error);
               }
             } else {
-              return reject(err);
+              return reject(error);
             }
           } else {
-            return reject(err);
+            return reject(error);
           }
         });
-      } catch (err) {
-        console.log(err);
-        throw err;
+      } catch (error) {
+        console.log(error);
+        throw error;
       }
     });
 }

@@ -6,6 +6,12 @@ const Account = require('../support/account');
 
 const body = urlencoded({ extended: false });
 
+const bodyParser = require('body-parser');
+const parse = bodyParser.urlencoded({ extended: false });
+
+var accountId;
+var rememeber;
+
 module.exports = (app, provider) => {
   const { constructor: { errors: { SessionNotFound } } } = provider;
 
@@ -40,18 +46,72 @@ module.exports = (app, provider) => {
           client,
           details,
           title: 'Sign-in',
-          params: querystring.stringify(details.params, ',<br/>', ' = ', {
-            encodeURIComponent: value => value,
-          }),
-          interaction: querystring.stringify(details.interaction, ',<br/>', ' = ', {
-            encodeURIComponent: value => value,
-          }),
+          params: "",
+          interaction: ""
         });
       }
+      var promptedScopes = details.params.scope
+      promptedScopes = promptedScopes.split(" ")
+      var index = promptedScopes.indexOf('openid')
+      promptedScopes.splice(index, 1)
       return res.render('interaction', {
         client,
         details,
         title: 'Authorize',
+        params: promptedScopes,
+        interaction: ""
+      });
+    } catch (err) {
+      return next(err);
+    }
+  });
+
+  app.post('/interaction/:grant/login', parse, async (req, res, next) => {
+    console.log('authentice called from express.js');
+    console.log('********');
+
+
+    const details = await provider.interactionDetails(req);
+    const client = await provider.Client.find(details.params.client_id);
+    console.log('******** details, clients fetched');
+    Account.authenticate(req.body.login, req.body.password)
+      .then(
+        (response) => {
+          accountId = response.accountId
+          remember = req.body.remember
+          var promptedScopes = details.params.scope
+          promptedScopes = promptedScopes.split(" ")
+          var index = promptedScopes.indexOf('openid')
+          promptedScopes.splice(index, 1)
+          console.log("paramScope", promptedScopes)
+          console.log("remember", details.params.scope)
+          res.render('interaction', {
+            client,
+            details,
+            title: 'Authorize',
+            params: promptedScopes,
+            interaction: ""
+          })
+        }
+
+      ).catch(
+        next);
+  });
+
+  app.post('/interaction/:grant/login', setNoCache, body, async (req, res, next) => {
+    try {
+      // await provider.interactionFinished(req, res, result);
+      console.log("reeeeeeee", req.body)
+      console.log("/interaction/:grant/login error called")
+      const details = await provider.interactionDetails(req);
+      const client = await provider.Client.find(details.params.client_id);
+      console.log("*******/interaction/:grant/login params: ", details.params)
+      console.log("*******/interaction/:grant/login interaction: ", details.interaction)
+      return res.render('login_error', {
+        client,
+        details,
+        title: 'Sign-in',
+        params: 'Email ort password is wrong',
         params: querystring.stringify(details.params, ',<br/>', ' = ', {
           encodeURIComponent: value => value,
         }),
@@ -60,38 +120,30 @@ module.exports = (app, provider) => {
         }),
       });
     } catch (err) {
-      return next(err);
-    }
-  });
-
-  app.post('/interaction/:grant/confirm', setNoCache, body, async (req, res, next) => {
-    try {
-      const result = { consent: {} };
-      await provider.interactionFinished(req, res, result);
-    } catch (err) {
       next(err);
     }
   });
 
-  app.post('/interaction/:grant/login', setNoCache, body, async (req, res, next) => {
-    try {
-      const account = await Account.findByLogin(req.body.login);
-
-      const result = {
-        login: {
-          account: account.accountId,
-          acr: 'urn:mace:incommon:iap:bronze',
-          amr: ['pwd'],
-          remember: !!req.body.remember,
-          ts: Math.floor(Date.now() / 1000),
-        },
-        consent: {},
-      };
-
-      await provider.interactionFinished(req, res, result);
-    } catch (err) {
-      next(err);
-    }
+  app.post('/interaction/:grant/confirm', parse, (req, res, next) => {
+    var allScopes = req.body.allScopes;
+    allScopes = allScopes.split(",");
+    console.log("all Scopes", allScopes)
+    var selectedScopess = req.body.params;
+    console.log("selected scope", selectedScopess)
+    var loginRememberScope = remember ? ['offline_access'] : [];
+    var rejectedScopes = selectedScopess ? allScopes.filter((el) => !selectedScopess.includes(el)) : allScopes;
+    rejectedScopes = rejectedScopes.concat(loginRememberScope)
+    console.log("rejectedScopes", rejectedScopes);
+    provider.interactionFinished(req, res, {
+      login: {
+        account: accountId,
+        remember: !!rememeber,
+        ts: Math.floor(Date.now() / 1000),
+      },
+      consent: {
+        rejectedScopes: rejectedScopes,
+      },
+    }).catch(next)
   });
 
   app.use((err, req, res, next) => {
